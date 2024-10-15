@@ -1,6 +1,6 @@
 # Poker
 
-A poker engine with reinforcement learning.
+An AI-powered poker engine with modern reinforcement learning techniques.
 
 ## Getting Started
 
@@ -12,6 +12,8 @@ pip install -r requirements.txt
 ```
 
 ## Milestone 1
+
+For the first milestone, we are focused on creating a simple bot that can push or fold during the pre-flop action in a simplified Texas Hold'em poker game.
 
 ### Motivation
 
