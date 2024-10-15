@@ -1,4 +1,4 @@
-# Poker
+# Ivey
 
 An AI-powered poker engine with modern reinforcement learning techniques. A CS 229 project.
 
