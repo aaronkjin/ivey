@@ -1,6 +1,6 @@
 # Poker
 
-An AI-powered poker engine with modern reinforcement learning techniques.
+An AI-powered poker engine with modern reinforcement learning techniques. A CS 229 project.
 
 ## Getting Started
 
