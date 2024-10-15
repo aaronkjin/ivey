@@ -2,6 +2,15 @@
 
 A poker engine with reinforcement learning.
 
+## Getting Started
+
+Prerequisites:
+
+```bash
+# install core dependencies
+pip install -r requirements.txt
+```
+
 ## Milestone 1
 
 ### Motivation
