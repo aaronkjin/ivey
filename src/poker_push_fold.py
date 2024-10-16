@@ -48,12 +48,7 @@ class Game:
             return []
 
     def make_action(self, action):
-<<<<<<< HEAD:poker_push_fold.py
         legal_actions = self.get_actions(self.state)
-=======
-        legal_actions = self.get_actions()
-
->>>>>>> 21a2152d81e0c61e9f2baefbd28e76d2811f2647:src/poker_push_fold.py
         if action not in legal_actions:
             raise Exception("Illegal Action")
         
@@ -188,7 +183,6 @@ class QLearningAgent:
 
             return random.choice(max_q_actions)
 
-<<<<<<< HEAD:poker_push_fold.py
     def update(self, final_reward):
         # Iterate over the game history to update Q-values for all actions taken
         for t in reversed(range(len(self.history))):
@@ -218,23 +212,6 @@ class QLearningAgent:
 
         # Clear the history after each game
         self.history = []
-=======
-    def update(self, state, action, reward, next_state, next_legal_actions):
-        # Find max Q-value for the next state
-        max_next_q = max(
-            [
-                self.q_table[(next_state, next_action)]
-                for next_action in next_legal_actions
-            ],
-            default=0,
-        )
-
-        # Q-learning update rule
-        current_q = self.q_table[(state, action)]
-        self.q_table[(state, action)] = current_q + self.alpha * (
-            reward + self.gamma * max_next_q - current_q
-        )
->>>>>>> 21a2152d81e0c61e9f2baefbd28e76d2811f2647:src/poker_push_fold.py
 
 
 # Main game loop where player 1 learns using Q-learning and player 2 plays randomly
@@ -265,12 +242,7 @@ def simulate_game(agent):
 
     while game.get_game_over() == False:
         state = game.get_state(player_one=True)
-<<<<<<< HEAD:poker_push_fold.py
         legal_actions = Game.get_actions(game.state)
-=======
-        legal_actions = game.get_actions()
-        
->>>>>>> 21a2152d81e0c61e9f2baefbd28e76d2811f2647:src/poker_push_fold.py
         if game.player1_turn:
             action = agent.choose_action(state, legal_actions)
             game.make_action(action)
