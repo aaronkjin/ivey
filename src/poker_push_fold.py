@@ -48,19 +48,29 @@ class Game:
             return []
 
     def make_action(self, action):
+<<<<<<< HEAD:poker_push_fold.py
         legal_actions = self.get_actions(self.state)
+=======
+        legal_actions = self.get_actions()
+
+>>>>>>> 21a2152d81e0c61e9f2baefbd28e76d2811f2647:src/poker_push_fold.py
         if action not in legal_actions:
             raise Exception("Illegal Action")
+        
         self.state.append(action)
+
         if action == Actions.FOLD:
             self.reward = (
                 self.player1_stack - self.starting_stack
                 if self.player1_turn
                 else self.starting_stack - self.player2_stack
             )
+
             self.game_over = True
+
         if action == Actions.CHECK:
             self.evaluate_winner()
+
         if action == Actions.CALL:
             if self.player1_turn:
                 self.player1_stack -= self.cur_raise
@@ -69,12 +79,15 @@ class Game:
 
             self.pot += self.cur_raise
             self.cur_raise = 0
+
             if (len(self.state) >= 2) and self.state[-2] == Actions.RAISE:
                 self.evaluate_winner()
+
         if action == Actions.RAISE:
             raise_amount = (
                 self.player1_stack if self.player1_turn else self.player2_stack
             )
+
             self.pot += raise_amount
             self.cur_raise = raise_amount - self.cur_raise
 
@@ -87,13 +100,16 @@ class Game:
 
     def random_board(self):
         board = []
+
         for _ in range(5):
             valid = False
+
             while not valid:
                 rank = random.choice(list("23456789TJQKA"))
                 suit = random.choice(list("shdc"))
                 card = Card.new(rank + suit)
                 valid = True
+
                 if card in board + self.player1_hand + self.player2_hand:
                     valid = False
 
@@ -102,14 +118,15 @@ class Game:
         return board
 
     def evaluate_winner(self):
-
         hand1_wins = 0
+
         for _ in range(100):
 
             board = self.random_board()
 
             hand1_score = self.evaluator.evaluate(board, self.player1_hand)
             hand2_score = self.evaluator.evaluate(board, self.player2_hand)
+
             if hand1_score < hand2_score:
                 hand1_wins += 1
 
@@ -126,6 +143,7 @@ class Game:
 
     def get_state(self, player_one):
         state_str = []
+
         if player_one:
             state_str.append(Card.int_to_pretty_str(self.player1_hand[0]))
             state_str.append(Card.int_to_pretty_str(self.player1_hand[1]))
@@ -167,8 +185,10 @@ class QLearningAgent:
                 for action in legal_actions
                 if self.q_table[(state, action)] == max_q
             ]
+
             return random.choice(max_q_actions)
 
+<<<<<<< HEAD:poker_push_fold.py
     def update(self, final_reward):
         # Iterate over the game history to update Q-values for all actions taken
         for t in reversed(range(len(self.history))):
@@ -198,6 +218,23 @@ class QLearningAgent:
 
         # Clear the history after each game
         self.history = []
+=======
+    def update(self, state, action, reward, next_state, next_legal_actions):
+        # Find max Q-value for the next state
+        max_next_q = max(
+            [
+                self.q_table[(next_state, next_action)]
+                for next_action in next_legal_actions
+            ],
+            default=0,
+        )
+
+        # Q-learning update rule
+        current_q = self.q_table[(state, action)]
+        self.q_table[(state, action)] = current_q + self.alpha * (
+            reward + self.gamma * max_next_q - current_q
+        )
+>>>>>>> 21a2152d81e0c61e9f2baefbd28e76d2811f2647:src/poker_push_fold.py
 
 
 # Main game loop where player 1 learns using Q-learning and player 2 plays randomly
@@ -228,7 +265,12 @@ def simulate_game(agent):
 
     while game.get_game_over() == False:
         state = game.get_state(player_one=True)
+<<<<<<< HEAD:poker_push_fold.py
         legal_actions = Game.get_actions(game.state)
+=======
+        legal_actions = game.get_actions()
+        
+>>>>>>> 21a2152d81e0c61e9f2baefbd28e76d2811f2647:src/poker_push_fold.py
         if game.player1_turn:
             action = agent.choose_action(state, legal_actions)
             game.make_action(action)
