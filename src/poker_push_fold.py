@@ -270,8 +270,8 @@ def play_game(agent1, agent2):
             agent2.history.append((state, action))
 
     reward = game.get_reward()
-    if game.hand_to_string(game.player1_hand) == "AAO":
-        print(reward, agent1.history)
+    # if game.hand_to_string(game.player1_hand) == "AAO":
+    #     print(reward, agent1.history)
     agent1.update(final_reward=reward)
     agent2.update(final_reward=-reward)
 
