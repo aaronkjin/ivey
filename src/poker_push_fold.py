@@ -1,5 +1,4 @@
 from enum import Enum
-import json
 import random
 from treys import Card, Deck, Evaluator
 
@@ -163,13 +162,18 @@ class Game:
 
 
 class QLearningAgent:
-    def __init__(self, actions, alpha=0.1, gamma=0.9, epsilon=0.1):
+    def __init__(self, actions, alpha=0.01, gamma=0.75, epsilon=0.1, batch_size=4096):
         self.q_table = defaultdict(float)  # Q-values initialized to 0
         self.alpha = alpha  # Learning rate
         self.gamma = gamma  # Discount factor
         self.epsilon = epsilon  # Exploration rate
         self.actions = actions  # Available actions
         self.history = []  # To store the (state, action) pairs of each game
+        self.experience_buffer = []  # To store all experiences for batch updates
+        self.buffer_cnt = (
+            0  # count for how many games are stored in our experience buffer
+        )
+        self.batch_size = batch_size  # Number of experiences to collect before updating
 
     def choose_action(self, state, legal_actions):
         # Epsilon-greedy action selection
@@ -185,35 +189,73 @@ class QLearningAgent:
             ]
             return random.choice(max_q_actions)
 
-    def update(self, final_reward):
+    def load_experiences(self, final_reward):
         for t in reversed(range(len(self.history))):
             state, action = self.history[t]
             if t == len(self.history) - 1:
                 # The final step: reward is the final outcome of the game
                 reward = final_reward
+                next_state = None
             else:
                 # Intermediate steps: reward is 0 and the value comes from future states
                 next_state, _ = self.history[t + 1]
                 reward = 0
 
-                future_q = max(
+                # future_q = max(
+                #     self.q_table[entry]
+                #     for entry in self.q_table
+                #     if entry[0] == next_state
+                # )
+                # future_q = final_reward
+                # reward += (self.gamma) * future_q
+
+            self.add_experience(state, action, reward, next_state)
+
+        self.history = []
+        if self.buffer_cnt >= self.batch_size:
+            self.update()  # Perform batch update when buffer reaches batch_size
+
+    def add_experience(self, state, action, reward, next_state):
+        # Add experience to buffer
+        self.experience_buffer.append((state, action, reward, next_state))
+
+    def update(self):
+        # Aggregate rewards for each (state, action) pair
+        reward_sums = defaultdict(float)  # Sum of rewards for each (state, action) pair
+        reward_counts = defaultdict(
+            int
+        )  # Count occurrences for each (state, action) pair
+
+        for state, action, reward, next_state in self.experience_buffer:
+            reward_sums[(state, action)] += reward
+            reward_counts[(state, action)] += 1
+
+            # Estimate future Q-value for non-terminal states
+            if next_state:
+                future_qs = list(
                     self.q_table[entry]
                     for entry in self.q_table
                     if entry[0] == next_state
                 )
-                reward += self.gamma * future_q
+                future_q = 0
+                if len(future_qs) > 0:
+                    future_q = max(future_qs)
+                reward_sums[(state, action)] += self.gamma * future_q
 
-            # Q-learning update rule
+        # Apply aggregated rewards to update Q-values
+        for (state, action), total_reward in reward_sums.items():
             current_q = self.q_table[(state, action)]
+            average_reward = total_reward / reward_counts[(state, action)]
             if action == Actions.FOLD:
-                self.q_table[(state, action)] = reward
+                self.q_table[(state, action)] = average_reward
             else:
                 self.q_table[(state, action)] = current_q + self.alpha * (
-                    reward - current_q
+                    average_reward - current_q
                 )
 
-        # Clear the history after each game
-        self.history = []
+        # Clear buffer after batch update
+        self.experience_buffer = []
+        self.buffer_cnt = 0
 
     def print_table(self, save_file=None):
         for state_action in self.q_table.keys():
@@ -224,7 +266,6 @@ class QLearningAgent:
             print("", file=save_file)
 
     def load_table(self, filename):
-
         with open(filename, "r", encoding="utf-8") as f:
             state = None
             action_str = None
@@ -237,21 +278,13 @@ class QLearningAgent:
                 elif line.startswith("Q-value: "):
                     q_value_str = line[len("Q-value: ") :]
                     q_value = float(q_value_str)
-                    if action_str == "Actions.CALL":
-                        action = Actions.CALL
-                    if action_str == "Actions.CHECK":
-                        action = Actions.CHECK
-                    if action_str == "Actions.FOLD":
-                        action = Actions.FOLD
-                    if action_str == "Actions.RAISE":
-                        action = Actions.RAISE
-
+                    action = Actions[action_str.split(".")[-1]]
                     self.q_table[(state, action)] = q_value
 
         print(f"Q-table successfully loaded from '{filename}'.")
 
 
-# Main game loop where both players learn using Q-learning
+# Modify the play_game function to use add_experience instead of update
 def play_game(agent1, agent2):
     game = Game()
 
@@ -270,22 +303,27 @@ def play_game(agent1, agent2):
             agent2.history.append((state, action))
 
     reward = game.get_reward()
-    if game.hand_to_string(game.player1_hand) == "AAO":
-        print(reward, agent1.history)
-    agent1.update(final_reward=reward)
-    agent2.update(final_reward=-reward)
+    agent1.buffer_cnt += 1
+    agent2.buffer_cnt += 1
+    agent1.load_experiences(final_reward=reward)
+    agent2.load_experiences(final_reward=-reward)
 
     return reward
 
 
 def simulate_game(agent1, agent2):
     game = Game()
+    while game.hand_to_string(game.player1_hand) != "AAO":
+        game = Game()
 
     while not game.get_game_over():
         if game.player1_turn:
             state = game.get_state(player_one=True)
             legal_actions = Game.get_actions(game.state)
-            action = agent1.choose_action(state, legal_actions)
+            if Actions.RAISE in legal_actions:
+                action = Actions.RAISE
+            else:
+                action = agent1.choose_action(state, legal_actions)
             game.make_action(action)
         else:
             state = game.get_state(player_one=False)
@@ -293,37 +331,47 @@ def simulate_game(agent1, agent2):
             action = agent2.choose_action(state, legal_actions)
             game.make_action(action)
 
-        print(str(action))
+        # print(str(action))
 
-    Card.print_pretty_cards(game.player1_hand)
-    Card.print_pretty_cards(game.player2_hand)
-    print(game.get_reward())
+    # Card.print_pretty_cards(game.player1_hand)
+    # Card.print_pretty_cards(game.player2_hand)
+    return game.get_reward()
 
 
 def main():
     agent1 = QLearningAgent(
-        actions=[Actions.CHECK, Actions.FOLD, Actions.CALL, Actions.RAISE], epsilon=0.0
+        actions=[Actions.CHECK, Actions.FOLD, Actions.CALL, Actions.RAISE],
     )
     agent2 = QLearningAgent(
-        actions=[Actions.CHECK, Actions.FOLD, Actions.CALL, Actions.RAISE], epsilon=0.0
+        actions=[Actions.CHECK, Actions.FOLD, Actions.CALL, Actions.RAISE],
     )
 
-    for epoch in range(100):
-        epoch_reward = 0
-        for _ in tqdm(range(10000)):
-            reward = play_game(agent1, agent2)
-            epoch_reward += reward
-        print(
-            f"Epoch {epoch}, Total Reward: {epoch_reward}, BB per hand: {epoch_reward / 10000}"
-        )
+    agent1.load_table(f"q_table_agent1_{800}.txt")
+    agent2.load_table(f"q_table_agent2_{800}.txt")
 
-    with open("q_table_agent1.txt", "w", encoding="utf-8") as file:
-        agent1.print_table(save_file=file)
-    with open("q_table_agent2.txt", "w", encoding="utf-8") as file:
-        agent2.print_table(save_file=file)
+    # for epoch in range(0, 2000):
+    #     epoch_reward = 0
+    #     for _ in tqdm(range(10000)):
+    #         reward = play_game(agent1, agent2)
+    #         epoch_reward += reward
+    #     print(
+    #         f"Epoch {epoch}, Total Reward: {epoch_reward}, BB per hand: {epoch_reward / 10000}"
+    #     )
 
-    for i in range(10):
-        simulate_game(agent1, agent2)
+    #     if epoch % 10 == 0 and epoch > 0:
+
+    #         with open(f"q_table_agent1_{epoch}.txt", "w", encoding="utf-8") as file:
+    #             agent1.print_table(save_file=file)
+    #         with open(f"q_table_agent2_{epoch}.txt", "w", encoding="utf-8") as file:
+    #             agent2.print_table(save_file=file)
+
+    total_reward = 0
+    for i in range(1000):
+        if i % 50 == 0:
+            print(i)
+        total_reward += simulate_game(agent1, agent2)
+
+    print(total_reward / 1000)
 
 
 if __name__ == "__main__":
