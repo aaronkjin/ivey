@@ -313,17 +313,17 @@ def play_game(agent1, agent2):
 
 def simulate_game(agent1, agent2):
     game = Game()
-    while game.hand_to_string(game.player1_hand) != "AAO":
-        game = Game()
+    # while game.hand_to_string(game.player1_hand) != "AAO":
+    #     game = Game()
 
     while not game.get_game_over():
         if game.player1_turn:
             state = game.get_state(player_one=True)
             legal_actions = Game.get_actions(game.state)
-            if Actions.RAISE in legal_actions:
-                action = Actions.RAISE
-            else:
-                action = agent1.choose_action(state, legal_actions)
+            # if Actions.RAISE in legal_actions:
+            #     action = Actions.RAISE
+            # else:
+            action = agent1.choose_action(state, legal_actions)
             game.make_action(action)
         else:
             state = game.get_state(player_one=False)
@@ -346,24 +346,24 @@ def main():
         actions=[Actions.CHECK, Actions.FOLD, Actions.CALL, Actions.RAISE],
     )
 
-    agent1.load_table(f"q_table_agent1_{800}.txt")
-    agent2.load_table(f"q_table_agent2_{800}.txt")
+    # agent1.load_table(f"q_table_agent1_{800}.txt")
+    # agent2.load_table(f"q_table_agent2_{800}.txt")
 
-    # for epoch in range(0, 2000):
-    #     epoch_reward = 0
-    #     for _ in tqdm(range(10000)):
-    #         reward = play_game(agent1, agent2)
-    #         epoch_reward += reward
-    #     print(
-    #         f"Epoch {epoch}, Total Reward: {epoch_reward}, BB per hand: {epoch_reward / 10000}"
-    #     )
+    for epoch in range(0, 2000):
+        epoch_reward = 0
+        for _ in tqdm(range(10000)):
+            reward = play_game(agent1, agent2)
+            epoch_reward += reward
+        print(
+            f"Epoch {epoch}, Total Reward: {epoch_reward}, BB per hand: {epoch_reward / 10000}"
+        )
 
-    #     if epoch % 10 == 0 and epoch > 0:
+        if epoch % 10 == 0 and epoch > 0:
 
-    #         with open(f"q_table_agent1_{epoch}.txt", "w", encoding="utf-8") as file:
-    #             agent1.print_table(save_file=file)
-    #         with open(f"q_table_agent2_{epoch}.txt", "w", encoding="utf-8") as file:
-    #             agent2.print_table(save_file=file)
+            with open(f"q_table_agent1_{epoch}.txt", "w", encoding="utf-8") as file:
+                agent1.print_table(save_file=file)
+            with open(f"q_table_agent2_{epoch}.txt", "w", encoding="utf-8") as file:
+                agent2.print_table(save_file=file)
 
     total_reward = 0
     for i in range(1000):
