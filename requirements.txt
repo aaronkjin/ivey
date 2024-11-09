@@ -1,2 +1,7 @@
 numpy
 treys
+tqdm
+pandas
+tkinter
+enum
+collections
