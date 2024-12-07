@@ -16,7 +16,7 @@ source ivey_env/bin/activate
 # install core dependencies
 pip install -r requirements.txt
 
-# run script
+# run scripts, e.g.
 python3 src/poker_push_fold.py
 
 # for charts, run script
