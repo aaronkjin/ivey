@@ -8,6 +8,9 @@ Agent 1 First-to-Act:
 Agent 2 vs. Raise:
 ![agent_2_vs_raise](https://github.com/user-attachments/assets/8c12e9b4-44c8-4dbb-a0f6-3409b673723b)
 
+Agent 2 vs. Call:
+<img width="1000" alt="agent_2_vs_call" src="https://github.com/user-attachments/assets/96332662-07f0-4a94-a6d3-25dbe5ef9b12">
+
 
 ## Getting Started
 
