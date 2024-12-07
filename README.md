@@ -38,6 +38,10 @@ To deactivate the virtual environment, simply run:
 deactivate
 ```
 
+## Background
+
+This study presents a reinforcement learning (RL) approach to developing poker agents, focusing specifically on preflop decision-making in heads-up No-Limit Texas Hold'em. Starting with a simplified push-fold framework, we progressively expanded our poker engine to incorporate more sophisticated betting options while honing in on efficiency and convergence. Our key contribution lies in the development and optimization of a Q-learning based framework that generates effective poker strategies through self-play. We demonstrate that a single-agent learning paradigm, where one agent learns both player positions and periodically synchronizes strategies, achieves better performance compared to traditional dual-agent approaches. Through efficient state space design, precomputed equity calculations, and optimized batch learning, our system learns complex poker concepts such as position play and hand strength evaluation. Our results show that, even with relatively simple RL techniques, poker agents can develop sophisticated preflop strategies that approach theoretical optimality. This work provides insights into both the effectiveness of different training approaches in imperfect information games and the crucial role of state space design in achieving optimal performance.
+
 ## Developers
 
 [Aaron Jin](https://github.com/aaronkjin)
