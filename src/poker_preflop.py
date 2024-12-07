@@ -350,13 +350,12 @@ def simulate_game(agent1, agent2):
 def main():
     hands_in_epoch = 100000
     agent = QLearningAgent(batch_size=hands_in_epoch, alpha=0.005)
-    agent.load_table("preflop_selfplay/q_table_agent_340.txt")
     copy_agent = copy.deepcopy(agent)
 
     total_reward = 0
     total_hands = 0
 
-    for epoch in range(340, 10000):
+    for epoch in range(10000):
         epoch_reward = 0
         for _ in tqdm(range(hands_in_epoch)):
             reward = play_game(agent, copy_agent)
