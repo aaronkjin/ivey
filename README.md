@@ -5,6 +5,9 @@ An AI-powered poker engine with modern reinforcement learning techniques. A CS 2
 Agent 1 First-to-Act:
 ![agent_1_first_action](https://github.com/user-attachments/assets/bd721df4-ee44-4291-b2a9-6633d0f330d8)
 
+Agent 2 vs. Raise:
+![agent_2_vs_raise](https://github.com/user-attachments/assets/8c12e9b4-44c8-4dbb-a0f6-3409b673723b)
+
 
 ## Getting Started
 
