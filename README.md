@@ -2,6 +2,10 @@
 
 An AI-powered poker engine with modern reinforcement learning techniques. A CS 229 project.
 
+Agent 1 First-to-Act:
+![agent_1_first_action](https://github.com/user-attachments/assets/bd721df4-ee44-4291-b2a9-6633d0f330d8)
+
+
 ## Getting Started
 
 Prerequisites:
