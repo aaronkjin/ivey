@@ -10,6 +10,20 @@ class Actions(Enum):
     FOLD = 1
     CALL = 2
     RAISE = 3
+    ALL_IN = 4
+
+
+def actions_to_str(action):
+    if action == Actions.CHECK:
+        return "Check"
+    if action == Actions.FOLD:
+        return "Fold"
+    if action == Actions.CALL:
+        return "Call"
+    if action == Actions.RAISE:
+        return "Raise"
+    if action == Actions.ALL_IN:
+        return "All In"
 
 
 def standardize_hand_format(hand):
@@ -71,27 +85,44 @@ def create_poker_chart(filename, state_pattern=""):
     if state_pattern == "":
         title += " Agent 1 First Action"
         legend_items = [
-            ("Raise", Actions.RAISE),
-            ("Call", Actions.CALL),
-            ("Fold", Actions.FOLD),
+            (actions_to_str(action), action)
+            for (action, _) in list(action_table.values())[0]
         ]
     elif state_pattern == "C,R":
         title += " Agent 1 vs Raise"
         legend_items = [
-            ("Call", Actions.CALL),
-            ("Fold", Actions.FOLD),
+            (actions_to_str(action), action)
+            for (action, _) in list(action_table.values())[0]
         ]
     elif state_pattern == "C":
         title += " Agent 2 vs Call"
         legend_items = [
-            ("Check", Actions.CHECK),
-            ("Raise", Actions.RAISE),
+            (actions_to_str(action), action)
+            for (action, _) in list(action_table.values())[0]
         ]
     elif state_pattern == "R":
         title += " Agent 2 vs Raise"
         legend_items = [
-            ("Call", Actions.CALL),
-            ("Fold", Actions.FOLD),
+            (actions_to_str(action), action)
+            for (action, _) in list(action_table.values())[0]
+        ]
+    elif state_pattern == "R,R":
+        title += " Agent 1 vs 3Bet"
+        legend_items = [
+            (actions_to_str(action), action)
+            for (action, _) in list(action_table.values())[0]
+        ]
+    elif state_pattern == "R,R,R":
+        title += " Agent 2 vs 4Bet"
+        legend_items = [
+            (actions_to_str(action), action)
+            for (action, _) in list(action_table.values())[0]
+        ]
+    elif state_pattern == "RAI":
+        title += " Agent 2 vs ALL IN"
+        legend_items = [
+            (actions_to_str(action), action)
+            for (action, _) in list(action_table.values())[0]
         ]
 
     root = tk.Tk()
@@ -120,6 +151,7 @@ def create_poker_chart(filename, state_pattern=""):
         Actions.CALL: "#44FF44",  # Green
         Actions.FOLD: "#0000FF",  # Blue
         Actions.CHECK: "#44FF44",  # Green
+        Actions.ALL_IN: "#9D00FF",  # Purple
     }
 
     frame = ttk.Frame(root)
@@ -174,9 +206,3 @@ def create_poker_chart(filename, state_pattern=""):
         label.grid(row=i + 1, column=0, padx=5, pady=2, sticky=tk.W)
 
     root.mainloop()
-
-
-create_poker_chart(filename="q_table_agent1_1880.txt", state_pattern="")
-create_poker_chart(filename="q_table_agent1_1990.txt", state_pattern="C,R")
-create_poker_chart(filename="q_table_agent2_1990.txt", state_pattern="C")
-create_poker_chart(filename="q_table_agent2_1990.txt", state_pattern="R")

@@ -2,12 +2,10 @@ from enum import Enum
 import random
 import copy
 import json
-from treys import Card, Deck, Evaluator
 
 import numpy as np
 from collections import defaultdict
 from tqdm import tqdm
-from dummy_agents import RandomAgent
 
 
 with open("preflop_evs.json", "r") as file:
@@ -157,129 +155,6 @@ class Game:
 
 
 class QLearningAgent:
-    def __init__(self, alpha=0.05, gamma=0.75, epsilon=0.25, batch_size=10000):
-        self.q_table = defaultdict(float)  # Q-values initialized to 0
-        self.alpha = alpha  # Learning rate
-        self.gamma = gamma  # Discount factor
-        self.epsilon = epsilon  # Exploration rate
-        self.history = []  # To store the (state, action) pairs of each game
-        self.experience_buffer = []  # To store all experiences for batch updates
-        self.buffer_cnt = (
-            0  # count for how many games are stored in our experience buffer
-        )
-        self.batch_size = batch_size  # Number of experiences to collect before updating
-
-    def choose_action(self, state, legal_actions):
-        # Epsilon-greedy action selection
-        if np.random.uniform(0, 1) < self.epsilon:
-            return random.choice(legal_actions)
-        else:
-            q_values = [self.q_table[(state, action)] for action in legal_actions]
-            max_q = max(q_values)
-            max_q_actions = [
-                action
-                for action in legal_actions
-                if self.q_table[(state, action)] == max_q
-            ]
-            return random.choice(max_q_actions)
-
-    def load_experiences(self, final_reward):
-        for t in reversed(range(len(self.history))):
-            state, action = self.history[t]
-            if t == len(self.history) - 1:
-                # The final step: reward is the final outcome of the game
-                reward = final_reward
-                next_state = None
-            else:
-                # Intermediate steps: reward is 0 and the value comes from future states
-                next_state, _ = self.history[t + 1]
-                reward = 0
-                # reward = final_reward
-
-                # future_q = max(
-                #     self.q_table[entry]
-                #     for entry in self.q_table
-                #     if entry[0] == next_state
-                # )
-                # future_q = final_reward
-                # reward += (self.gamma) * future_q
-
-            self.add_experience(state, action, reward, next_state)
-
-        self.history = []
-        if self.buffer_cnt >= self.batch_size:
-            self.update()  # Perform batch update when buffer reaches batch_size
-
-    def add_experience(self, state, action, reward, next_state):
-        # Add experience to buffer
-        self.experience_buffer.append((state, action, reward, next_state))
-
-    def update(self):
-        # Aggregate rewards for each (state, action) pair
-        reward_sums = defaultdict(float)  # Sum of rewards for each (state, action) pair
-        reward_counts = defaultdict(
-            int
-        )  # Count occurrences for each (state, action) pair
-
-        for state, action, reward, next_state in self.experience_buffer:
-            reward_sums[(state, action)] += reward
-            reward_counts[(state, action)] += 1
-
-            # Estimate future Q-value for non-terminal states
-            if next_state:
-                future_qs = list(
-                    self.q_table[entry]
-                    for entry in self.q_table
-                    if entry[0] == next_state
-                )
-                future_q = 0
-                if len(future_qs) > 0:
-                    future_q = max(future_qs)
-                reward_sums[(state, action)] += future_q
-
-        # Apply aggregated rewards to update Q-values
-        for (state, action), total_reward in reward_sums.items():
-            current_q = self.q_table[(state, action)]
-            average_reward = total_reward / reward_counts[(state, action)]
-            if action == Actions.FOLD:
-                self.q_table[(state, action)] = average_reward
-            else:
-                self.q_table[(state, action)] = current_q + self.alpha * (
-                    average_reward - current_q
-                )
-
-        # Clear buffer after batch update
-        self.experience_buffer = []
-        self.buffer_cnt = 0
-
-    def print_table(self, save_file=None):
-        for state_action in self.q_table.keys():
-            state, action = state_action
-            print(f"State: {state}", file=save_file)
-            print(f"Action: {action}", file=save_file)
-            print(f"Q-value: {self.q_table[state_action]}", file=save_file)
-            print("", file=save_file)
-
-    def load_table(self, filename):
-        with open(filename, "r", encoding="utf-8") as f:
-            state = None
-            action_str = None
-            for line in f:
-                line = line.strip()
-                if line.startswith("State: "):
-                    state = line[len("State: ") :]
-                elif line.startswith("Action: "):
-                    action_str = line[len("Action: ") :]
-                elif line.startswith("Q-value: "):
-                    q_value_str = line[len("Q-value: ") :]
-                    q_value = float(q_value_str)
-                    action = Actions[action_str.split(".")[-1]]
-                    self.q_table[(state, action)] = q_value
-
-        print(f"Q-table successfully loaded from '{filename}'.")
-
-
-class QLearningAgent:
     def __init__(self, alpha=0.05, gamma=0.75, epsilon=0.15, batch_size=10240):
         self.q_table = defaultdict(float)  # Q-values initialized to 0
         self.alpha = alpha  # Learning rate
@@ -293,7 +168,6 @@ class QLearningAgent:
         self.batch_size = batch_size  # Number of experiences to collect before updating
 
     def choose_action(self, state, legal_actions):
-        # Epsilon-greedy action selection
         if np.random.uniform(0, 1) < self.epsilon:
             return random.choice(legal_actions)
         else:
@@ -310,11 +184,9 @@ class QLearningAgent:
         for t in reversed(range(len(self.history))):
             state, action = self.history[t]
             if t >= len(self.history) - 1:
-                # The final step: reward is the final outcome of the game
                 reward = final_reward
                 next_state = None
             else:
-                # Intermediate steps: reward is 0 and the value comes from future states
                 next_state, _ = self.history[t + 1]
                 reward = 0
 
@@ -322,24 +194,21 @@ class QLearningAgent:
 
         self.history = []
         if self.buffer_cnt >= self.batch_size:
-            self.update()  # Perform batch update when buffer reaches batch_size
+            self.update()  
 
     def add_experience(self, state, action, reward, next_state):
-        # Add experience to buffer
         self.experience_buffer.append((state, action, reward, next_state))
 
     def update(self):
-        # Aggregate rewards for each (state, action) pair
-        reward_sums = defaultdict(float)  # Sum of rewards for each (state, action) pair
+        reward_sums = defaultdict(float)  
         reward_counts = defaultdict(
             int
-        )  # Count occurrences for each (state, action) pair
+        ) 
 
         for state, action, reward, next_state in self.experience_buffer:
             reward_sums[(state, action)] += reward
             reward_counts[(state, action)] += 1
 
-            # Estimate future Q-value for non-terminal states
             if next_state:
                 future_qs = list(
                     self.q_table[entry]
@@ -352,7 +221,6 @@ class QLearningAgent:
                 reward_sums[(state, action)] += future_q
                 
 
-        # Apply aggregated rewards to update Q-values
         for (state, action), total_reward in reward_sums.items():
             current_q = self.q_table[(state, action)]
             average_reward = total_reward / reward_counts[(state, action)]
@@ -364,7 +232,6 @@ class QLearningAgent:
                     average_reward - current_q
                 )
 
-        # Clear buffer after batch update
         self.experience_buffer = []
         self.buffer_cnt = 0
 
@@ -395,7 +262,6 @@ class QLearningAgent:
         print(f"Q-table successfully loaded from '{filename}'.")
 
 
-# Modify the play_game function to use add_experience instead of update
 def play_game(agent, copy_agent):
     game = Game()
     player1_agent = np.random.uniform() > 0.5
@@ -413,9 +279,6 @@ def play_game(agent, copy_agent):
         else:
             state = game.get_state(player_one=False)
             legal_actions = Game.get_actions(game.state)
-            # action = agent.choose_action(state, legal_actions)
-            # game.make_action(action)
-            # agent.history.append((state, action))
             if not player1_agent:
                 action = agent.choose_action(state, legal_actions)
                 agent.history.append((state, action))
@@ -433,8 +296,6 @@ def play_game(agent, copy_agent):
 
 def simulate_game(agent1, agent2):
     game = Game()
-    # while game.hand_to_string(game.player1_hand) != "AAO":
-    #     game = Game()
 
     while not game.get_game_over():
         if game.player1_turn:
@@ -462,7 +323,7 @@ def main():
     total_reward = 0
     total_hands = 0
 
-    for epoch in range(0, 2000):
+    for epoch in range(0, 10000):
         epoch_reward = 0
         for _ in tqdm(range(hands_in_epoch)):
             reward = play_game(agent, copy_agent)

@@ -1,11 +1,11 @@
 from enum import Enum
 import json
 import random
-from treys import Card, Deck, Evaluator
 
 import numpy as np
 from collections import defaultdict
 from tqdm import tqdm
+import copy
 
 with open("preflop_evs.json", "r") as file:
     preflop_evs = json.load(file)
@@ -76,7 +76,7 @@ class Game:
         if len(state) == 0:
             return [Actions.FOLD, Actions.CALL, Actions.RAISE, Actions.ALL_IN]
         elif state[-1] == Actions.CALL:
-            return [Actions.CHECK, Actions.RAISE]
+            return [Actions.CHECK, Actions.RAISE, Actions.ALL_IN]
         elif state[-1] == Actions.RAISE:
             return [Actions.FOLD, Actions.CALL, Actions.RAISE, Actions.ALL_IN]
         elif state[-1] == Actions.ALL_IN:
@@ -223,41 +223,26 @@ class QLearningAgent:
                 reward = final_reward
                 next_state = None
             else:
-                # Intermediate steps: reward is 0 and the value comes from future states
                 next_state, _ = self.history[t + 1]
                 reward = 0
-                # reward = final_reward
-
-                # future_q = max(
-                #     self.q_table[entry]
-                #     for entry in self.q_table
-                #     if entry[0] == next_state
-                # )
-                # future_q = final_reward
-                # reward += (self.gamma) * future_q
 
             self.add_experience(state, action, reward, next_state)
 
         self.history = []
         if self.buffer_cnt >= self.batch_size:
-            self.update()  # Perform batch update when buffer reaches batch_size
+            self.update()
 
     def add_experience(self, state, action, reward, next_state):
-        # Add experience to buffer
         self.experience_buffer.append((state, action, reward, next_state))
 
     def update(self):
-        # Aggregate rewards for each (state, action) pair
-        reward_sums = defaultdict(float)  # Sum of rewards for each (state, action) pair
-        reward_counts = defaultdict(
-            int
-        )  # Count occurrences for each (state, action) pair
+        reward_sums = defaultdict(float)
+        reward_counts = defaultdict(int)
 
         for state, action, reward, next_state in self.experience_buffer:
             reward_sums[(state, action)] += reward
             reward_counts[(state, action)] += 1
 
-            # Estimate future Q-value for non-terminal states
             if next_state:
                 future_qs = list(
                     self.q_table[entry]
@@ -269,7 +254,6 @@ class QLearningAgent:
                     future_q = max(future_qs)
                 reward_sums[(state, action)] += future_q
 
-        # Apply aggregated rewards to update Q-values
         for (state, action), total_reward in reward_sums.items():
             current_q = self.q_table[(state, action)]
             average_reward = total_reward / reward_counts[(state, action)]
@@ -280,7 +264,6 @@ class QLearningAgent:
                     average_reward - current_q
                 )
 
-        # Clear buffer after batch update
         self.experience_buffer = []
         self.buffer_cnt = 0
 
@@ -311,92 +294,72 @@ class QLearningAgent:
         print(f"Q-table successfully loaded from '{filename}'.")
 
 
-# Modify the play_game function to use add_experience instead of update
-def play_game(agent1, agent2, train_agent1=True, train_agent2=True):
+def play_game(agent, copy_agent):
     game = Game()
+    player1_agent = np.random.uniform() > 0.5
 
     while not game.get_game_over():
         if game.player1_turn:
             state = game.get_state(player_one=True)
             legal_actions = Game.get_actions(game.state)
-            if Actions.RAISE in legal_actions:
-                raise_amount = game.cur_raise + (game.pot + game.cur_raise)
-                if raise_amount > game.player1_stack:
-                    legal_actions.remove(Actions.RAISE)
-            action = agent1.choose_action(state, legal_actions)
+            if player1_agent:
+                action = agent.choose_action(state, legal_actions)
+                agent.history.append((state, action))
+            else:
+                action = copy_agent.choose_action(state, legal_actions)
             game.make_action(action)
-            if train_agent1:
-                agent1.history.append((state, action))
         else:
             state = game.get_state(player_one=False)
             legal_actions = Game.get_actions(game.state)
-            if Actions.RAISE in legal_actions:
-                raise_amount = game.cur_raise + (game.pot + game.cur_raise)
-                if raise_amount > game.player2_stack:
-                    legal_actions.remove(Actions.RAISE)
-            action = agent2.choose_action(state, legal_actions)
+            if not player1_agent:
+                action = agent.choose_action(state, legal_actions)
+                agent.history.append((state, action))
+            else:
+                action = copy_agent.choose_action(state, legal_actions)
             game.make_action(action)
-            if train_agent2:
-                agent2.history.append((state, action))
 
     reward = game.get_reward()
 
-    if train_agent1:
-        agent1.buffer_cnt += 1
-        agent1.load_experiences(final_reward=reward)
-    if train_agent2:
-        agent2.buffer_cnt += 1
-        agent2.load_experiences(final_reward=-reward)
+    agent.buffer_cnt += 1
+    agent.load_experiences(final_reward=(reward if player1_agent else -reward))
 
     return reward
 
 
 def simulate_game(agent1, agent2):
     game = Game()
-    # while game.hand_to_string(game.player1_hand) != "AAO":
-    #     game = Game()
 
     while not game.get_game_over():
         if game.player1_turn:
             state = game.get_state(player_one=True)
             legal_actions = Game.get_actions(game.state)
-            if Actions.RAISE in legal_actions:
-                raise_amount = game.cur_raise + (game.pot + game.cur_raise)
-                if raise_amount > game.player1_stack:
-                    legal_actions.remove(Actions.RAISE)
 
             action = agent1.choose_action(state, legal_actions)
             game.make_action(action)
         else:
             state = game.get_state(player_one=False)
             legal_actions = Game.get_actions(game.state)
-            if Actions.RAISE in legal_actions:
-                raise_amount = game.cur_raise + (game.pot + game.cur_raise)
-                if raise_amount > game.player2_stack:
-                    legal_actions.remove(Actions.RAISE)
-
             action = agent2.choose_action(state, legal_actions)
             game.make_action(action)
 
-        # print(str(action))
+            print(str(action))
 
-    # Card.print_pretty_cards(game.player1_hand)
-    # Card.print_pretty_cards(game.player2_hand)
     return game.get_reward()
 
 
 def main():
     hands_in_epoch = 100000
-    agent1 = QLearningAgent(batch_size=hands_in_epoch, alpha=0.01)
-    agent2 = QLearningAgent(batch_size=hands_in_epoch, alpha=0.01)
+    agent = QLearningAgent(batch_size=hands_in_epoch, alpha=0.005)
+    agent.load_table("preflop_selfplay/q_table_agent_340.txt")
+    copy_agent = copy.deepcopy(agent)
 
     total_reward = 0
     total_hands = 0
 
-    for epoch in range(0, 2000):
+    for epoch in range(340, 10000):
         epoch_reward = 0
         for _ in tqdm(range(hands_in_epoch)):
-            reward = play_game(agent1, agent2)
+            reward = play_game(agent, copy_agent)
             epoch_reward += reward
 
         total_reward += epoch_reward
@@ -405,31 +368,15 @@ def main():
             f"Epoch {epoch},  Epoch BB per hand: {epoch_reward / hands_in_epoch}, Overall BB per hand: {total_reward / total_hands}"
         )
 
-        if epoch % 10 == 0 and epoch > 0:
+        if epoch % 5 == 0 and epoch > 0:
+            copy_agent = copy.deepcopy(agent)
 
+        if epoch % 10 == 0 and epoch > 0:
             with open(
-                f"preflop/q_table_agent1_{epoch}.txt", "w", encoding="utf-8"
+                f"preflop_selfplay/q_table_agent_{epoch}.txt", "w", encoding="utf-8"
             ) as file:
-                agent1.print_table(save_file=file)
-            with open(
-                f"preflop/q_table_agent2_{epoch}.txt", "w", encoding="utf-8"
-            ) as file:
-                agent2.print_table(save_file=file)
+                agent.print_table(save_file=file)
 
 
 if __name__ == "__main__":
     main()
-
-    # game = Game()
-
-    # game.make_action(Actions.CALL)
-    # game.make_action(Actions.RAISE)
-    # print(game.cur_raise, game.pot, game.player1_stack, game.player2_stack)
-    # game.make_action(Actions.CALL)
-    # Card.print_pretty_cards(game.player1_hand)
-    # Card.print_pretty_cards(game.player2_hand)
-    # print(game.get_reward())
-
-    # 0.5 1
-    # 2.5 1
-    # 2.5 6
