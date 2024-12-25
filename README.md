@@ -3,15 +3,16 @@
 An AI-powered poker engine with modern reinforcement learning techniques. A CS 229 project.
 
 Agent 1 First-to-Act:
-![agent_1_first_action](https://github.com/user-attachments/assets/bd721df4-ee44-4291-b2a9-6633d0f330d8)
+<img width="800" alt="agent_1_first_action" src="https://github.com/user-attachments/assets/bd721df4-ee44-4291-b2a9-6633d0f330d8">
 Agent 2 vs. Raise:
-![agent_2_vs_raise](https://github.com/user-attachments/assets/8c12e9b4-44c8-4dbb-a0f6-3409b673723b)
+<img width="800" alt="agent_2_vs_raise" src="https://github.com/user-attachments/assets/8c12e9b4-44c8-4dbb-a0f6-3409b673723b">
 Agent 2 vs. Call:
-<img width="1000" alt="agent_2_vs_call" src="https://github.com/user-attachments/assets/96332662-07f0-4a94-a6d3-25dbe5ef9b12">
+<img width="800" alt="agent_2_vs_call" src="https://github.com/user-attachments/assets/96332662-07f0-4a94-a6d3-25dbe5ef9b12">
 Agent 1 vs. Raise:
-![agent_1_vs_raise](https://github.com/user-attachments/assets/57d13368-d7e9-47a7-be5b-609178c819f5)
+<img width="800" alt="agent_1_vs_raise" src="https://github.com/user-attachments/assets/57d13368-d7e9-47a7-be5b-609178c819f5">
 Poster:
-![CS 229 - Ivey Poster (1)](https://github.com/user-attachments/assets/ad396e1c-6f27-4bc4-962e-d8f68a0d9b7e)
+
+<img width="800" alt="ivey_poster" src="https://github.com/user-attachments/assets/ad396e1c-6f27-4bc4-962e-d8f68a0d9b7e">
 
 ## Getting Started
 
